@@ -3,26 +3,39 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Puzzle {
-
-    public static int[][] loadPuzzle(String filename) {
+    public static int[][] loadPuzzle(String filename, int index) {
         int[][] board = new int[9][9];
-
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filename));
             String line;
-
-            for (int i = 0; i < 9; i++) {
-                line = reader.readLine();
-                for (int j = 0; j < 9; j++) {
-                    board[i][j] = line.charAt(j) - '0';
+            int currentBoard = 0;
+            while (true) {
+                int row = 0;
+                while (row < 9) {
+                    line = reader.readLine();
+                    if (line == null) {
+                        reader.close();
+                        return null; // hết file
+                    }
+                    if (line.trim().isEmpty()) {
+                        continue; // bỏ qua dòng trống
+                    }
+                    if (currentBoard == index) {
+                        for (int j = 0; j < 9; j++) {
+                            board[row][j] = line.charAt(j) - '0';
+                        }
+                    }
+                    row++;
                 }
+                if (currentBoard == index) {
+                    reader.close();
+                    return board;
+                }
+                currentBoard++;
             }
-
-            reader.close();
         } catch (IOException e) {
             System.out.println("Error reading puzzle file");
         }
-
-        return board;
+        return null;
     }
 }
