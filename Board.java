@@ -1,28 +1,39 @@
+import java.util.List;
+import java.util.Vector;
+
 public class Board {
+
     static int[][] board;
-    public static void printPuzzle(String[] args) {
-        board = Puzzle.loadPuzzle("puzzle.txt",2);
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                System.out.print(board[i][j] + " ");
-            }
-            System.out.println();
-        }
+
+    static Vector<int[][]> puzzles = new Vector<>();
+
+    public static void ReadData() {
+        
+        // List<int[][]> list = SQL.ReadData();
+        // puzzles.addAll(list);
     }
-    // sửa giá trị 1 ô
+
+    public static void setPuzzle(int index) {
+        board = puzzles.get(index);
+    }
+
     public static void setCell(int row, int col, int value) {
         board[row][col] = value;
     }
-    // xóa giá trị 1 ô
+
     public static void clearCell(int row, int col) {
         board[row][col] = 0;
     }
-    // in lại bảng sau khi sửa
+
     public static void printBoard() {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
+
+        for (int i = 0; i < board.length; i++) {
+
+            for (int j = 0; j < board.length; j++) {
+
                 System.out.print(board[i][j] + " ");
             }
+
             System.out.println();
         }
     }
