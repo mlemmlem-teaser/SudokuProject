@@ -24,16 +24,16 @@ CREATE TABLE progress (
     FOREIGN KEY (level_id) REFERENCES levels(level_id)
 );
 INSERT INTO users VALUES
-(60001,'example@gmail.com','Password123','User60001'),
-(60002,'example@gmail.com','Password234','User60002'),
-(60003,'example@gmail.com','Password345','User60003'),
-(60004,'example@gmail.com','Password456','User60004'),
-(60005,'example@gmail.com','Password567','User60005'),
-(60006,'example@gmail.com','Password678','User60006'),
-(60007,'example@gmail.com','Password789','User60007'),
-(60008,'example@gmail.com','Password890','User60008'),
-(60009,'example@gmail.com','Password901','User60009'),
-(60010,'example@gmail.com','Password012','User60010');
+(60001,'example01@gmail.com','Password123','User60001'),
+(60002,'example02@gmail.com','Password234','User60002'),
+(60003,'example03@gmail.com','Password345','User60003'),
+(60004,'example04@gmail.com','Password456','User60004'),
+(60005,'example05@gmail.com','Password567','User60005'),
+(60006,'example06@gmail.com','Password678','User60006'),
+(60007,'example07@gmail.com','Password789','User60007'),
+(60008,'example08@gmail.com','Password890','User60008'),
+(60009,'example09@gmail.com','Password901','User60009'),
+(60010,'example@10gmail.com','Password012','User60010');
 INSERT INTO levels VALUES
 (10001,9,'530070000600195000098000060800060003400803001700020006060000280000419005000080079'),
 (10002,4,'1234341221434321'),

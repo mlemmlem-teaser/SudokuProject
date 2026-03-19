@@ -10,20 +10,21 @@ public class SQL {
 
     // Hàm kết nối SQL Server
     public static Connection getConnection() {
-    Connection conn = null;
-    try {
-        // Thêm trustServerCertificate=true để bỏ qua kiểm tra chứng chỉ bảo mật nếu cần
-        String url = "jdbc:sqlserver://localhost:1433;databaseName=SudokuManager;integratedSecurity=true;encrypt=false;trustServerCertificate=true";
-        
-        // Không cần truyền user/password khi dùng integratedSecurity
-        conn = DriverManager.getConnection(url);
-        System.out.println("Connect SQL Server success (Windows Auth)");
-    } catch (Exception e) {
-        System.err.println("Lỗi kết nối: " + e.getMessage());
-        // e.printStackTrace(); // Bật cái này nếu muốn xem chi tiết lỗi
+        Connection conn = null;
+        try {
+            // Thêm trustServerCertificate=true để bỏ qua kiểm tra chứng chỉ bảo mật nếu cần
+            String url = "jdbc:sqlserver://localhost:1433;databaseName=SudokuManager;integratedSecurity=true;encrypt=false;trustServerCertificate=true";
+
+            // Không cần truyền user/password khi dùng integratedSecurity
+            conn = DriverManager.getConnection(url);
+            System.out.println("Connect SQL Server success (Windows Auth)");
+        } catch (Exception e) {
+            System.err.println("Lỗi kết nối: " + e.getMessage());
+            // e.printStackTrace(); // Bật cái này nếu muốn xem chi tiết lỗi
+        }
+        return conn;
     }
-    return conn;
-}
+
     // Hàm đọc dữ liệu Sudoku từ database
     public static List<int[][]> ReadData() {
         List<int[][]> puzzles = new ArrayList<>();
@@ -42,11 +43,9 @@ public class SQL {
                         char c = board.charAt(index++);
                         if (c >= '1' && c <= '9') {
                             sudoku[i][j] = c - '0';
-                        }
-                        else if (c >= 'A' && c <= 'G') {
+                        } else if (c >= 'A' && c <= 'G') {
                             sudoku[i][j] = c - 'A' + 10;
-                        }
-                        else {
+                        } else {
                             sudoku[i][j] = 0;
                         }
                     }
@@ -58,6 +57,7 @@ public class SQL {
         }
         return puzzles;
     }
+
     public static String login(String gmail, String password) {
         try {
             Connection conn = getConnection();
@@ -65,7 +65,7 @@ public class SQL {
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setString(1, gmail);
             pstmt.setString(2, password);
-            
+
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("username"); // Trả về tên người dùng nếu đúng
@@ -74,5 +74,25 @@ public class SQL {
             e.printStackTrace();
         }
         return null; // Trả về null nếu sai email/password
+    }
+
+    public static List<Integer> getCompletedLevels(String username) {
+        List<Integer> completedIds = new ArrayList<>();
+        try {
+            Connection conn = getConnection();
+            // Truy vấn lấy level_id mà user đã hoàn thành (completed = 1)
+            String query = "SELECT p.level_id FROM progress p " +
+                    "JOIN users u ON p.user_id = u.user_id " +
+                    "WHERE u.username = ? AND p.completed = 1";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                completedIds.add(rs.getInt("level_id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return completedIds;
     }
 }
