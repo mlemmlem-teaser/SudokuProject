@@ -46,7 +46,7 @@ public class SudokuUI extends JFrame {
         title.setFont(new Font("Segoe UI", Font.BOLD, 30));
         title.setForeground(Color.WHITE);
 
-        JLabel subtitle = new JLabel("Login, chọn level, giải và mở khóa màn tiếp theo");
+        JLabel subtitle = new JLabel("Hãy chơi theo cách của bạn!");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitle.setForeground(new Color(230, 240, 250));
 
