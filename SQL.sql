@@ -1,29 +1,40 @@
 create database SudokuManager
-go 
+go
 
 use SudokuManager
 go
 
-CREATE TABLE users (
-    user_id INT PRIMARY KEY,
-    gmail VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    username VARCHAR(100) NOT NULL
-);
-CREATE TABLE levels (
-    level_id INT PRIMARY KEY,
-    size INT NOT NULL,
-    board_data VARCHAR(256) NOT NULL
-);
-CREATE TABLE progress (
-    user_id INT NOT NULL,
-    level_id INT NOT NULL,
-    completed BIT DEFAULT 0,
-    PRIMARY KEY (user_id, level_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (level_id) REFERENCES levels(level_id)
-);
-INSERT INTO users VALUES
+create table users (
+    user_id int primary key,
+    gmail varchar(255) not null unique,
+    password varchar(255) not null,
+    username varchar(100) not null
+)
+
+create table levels (
+    level_id int primary key,
+    size int not null,
+    board_data varchar(256) not null
+)
+
+create table progress (
+    user_id int not null,
+    level_id int not null,
+    completed bit default 0,
+    primary key (user_id, level_id),
+    foreign key (user_id) references users(user_id),
+    foreign key (level_id) references levels(level_id)
+)
+
+create table SudokuTime (
+    id int primary key identity(1,1),
+    player_name varchar(50),
+    level varchar(20),
+    time_seconds int,
+    played_at datetime default getdate()
+)
+
+insert into users values
 (60001,'example01@gmail.com','Password123','User60001'),
 (60002,'example02@gmail.com','Password234','User60002'),
 (60003,'example03@gmail.com','Password345','User60003'),
@@ -33,8 +44,9 @@ INSERT INTO users VALUES
 (60007,'example07@gmail.com','Password789','User60007'),
 (60008,'example08@gmail.com','Password890','User60008'),
 (60009,'example09@gmail.com','Password901','User60009'),
-(60010,'example@10gmail.com','Password012','User60010');
-INSERT INTO levels VALUES
+(60010,'example@10gmail.com','Password012','User60010')
+
+insert into levels values
 (10001,9,'530070000600195000098000060800060003400803001700020006060000280000419005000080079'),
 (10002,4,'1234341221434321'),
 (10003,16,'123456789ABCDEFG56789ABCDEFG12349ABCDEFG12345678DEFG123456789ABC23456789ABCDEFG16789ABCDEFG12345ABCDEFG123456789EFG123456789ABCD3456789ABCDEFG12789ABCDEFG123456BCDEFG123456789AFG123456789ABCDE456789ABCDEFG12389ABCDEFG1234567CDEFG123456789ABG123456789ABCDEF'),
@@ -44,8 +56,9 @@ INSERT INTO levels VALUES
 (10007,9,'200080300060070084030500209000105408000000000402706000301007040720040060004010003'),
 (10008,9,'000260701680070090190004500820100040004602900050003028009300074040050036703018000'),
 (10009,4,'2143431221344213'),
-(10010,9,'005300000800000020070010500400005300010070006003200080060500009004000030000009700');
-INSERT INTO progress VALUES
+(10010,9,'005300000800000020070010500400005300010070006003200080060500009004000030000009700')
+
+insert into progress values
 (60001,10001,1),
 (60001,10002,0),
 (60002,10003,1),
@@ -55,4 +68,4 @@ INSERT INTO progress VALUES
 (60006,10007,1),
 (60007,10008,0),
 (60008,10009,1),
-(60009,10010,0);
+(60009,10010,0)

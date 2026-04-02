@@ -1,10 +1,22 @@
+import java.sql.Connection;
+import javax.swing.SwingUtilities;
+
 public class Main {
 
     public static void main(String[] args) {
-    SQL.getConnection();
-    Board.ReadData();
-    
-    SudokuUI ui = new SudokuUI();
-    ui.openLogin(); // Ép người dùng login ngay khi mở app
-}
+        SwingUtilities.invokeLater(() -> {
+            Connection conn = SQL.getConnection();
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (Exception ignored) {
+            }
+
+            Board.ReadData();
+
+            SudokuUI ui = new SudokuUI();
+            ui.openLogin();
+        });
+    }
 }
