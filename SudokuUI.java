@@ -14,8 +14,11 @@ public class SudokuUI extends JFrame {
     DefaultListModel<String> levelModel;
     JPanel centerPanel;
     JPanel boardPanel;
+    JPanel boardContainer;
     JButton loginBtn;
     JButton solveBtn;
+
+    boolean updatingLevelList = false;
 
     JLabel labelTime = new JLabel("00:00");
     JLabel labelBest = new JLabel("Best: --:--");
@@ -77,9 +80,34 @@ public class SudokuUI extends JFrame {
         levelList.setSelectionForeground(Color.WHITE);
         levelList.setFixedCellHeight(36);
         levelList.setBorder(new EmptyBorder(8, 8, 8, 8));
+        levelList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel(value);
+            label.setOpaque(true);
+            label.setBorder(new EmptyBorder(4, 10, 4, 10));
+            label.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+
+            boolean locked = value != null && value.contains("[LOCKED]");
+            boolean done = value != null && value.contains("[DONE]");
+
+            if (isSelected) {
+                label.setBackground(list.getSelectionBackground());
+                label.setForeground(list.getSelectionForeground());
+            } else if (locked) {
+                label.setBackground(new Color(241, 243, 246));
+                label.setForeground(new Color(140, 140, 140));
+            } else if (done) {
+                label.setBackground(new Color(236, 248, 240));
+                label.setForeground(new Color(32, 124, 59));
+            } else {
+                label.setBackground(Color.WHITE);
+                label.setForeground(new Color(55, 55, 55));
+            }
+
+            return label;
+        });
 
         levelList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && loggedInUser != null) {
+            if (!e.getValueIsAdjusting() && loggedInUser != null && !updatingLevelList) {
                 int index = levelList.getSelectedIndex();
                 if (index == -1) {
                     return;
@@ -90,24 +118,13 @@ public class SudokuUI extends JFrame {
 
                 if (index > unlockedIndex) {
                     JOptionPane.showMessageDialog(this, "Màn chơi này đang bị khóa. Hãy hoàn thành các màn trước.");
+                    updatingLevelList = true;
                     levelList.setSelectedIndex(Math.min(unlockedIndex, Math.max(0, Board.getPuzzleCount() - 1)));
+                    updatingLevelList = false;
                     return;
                 }
 
-                timer.stop();
-                timer.reset();
-
-                Board.setPuzzle(index);
-                drawBoard(Board.board);
-
-                int best = SQL.getBestTime("Level " + (index + 1));
-                if (best >= 0) {
-                    labelBest.setText("Best: " + formatTime(best));
-                } else {
-                    labelBest.setText("Best: --:--");
-                }
-
-                timer.start();
+                loadLevel(index);
             }
         });
 
@@ -120,8 +137,8 @@ public class SudokuUI extends JFrame {
         leftContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
         leftContainer.add(levelPane, BorderLayout.CENTER);
 
-        JPanel boardHost = new JPanel(new GridBagLayout());
-        boardHost.setBackground(new Color(236, 240, 245));
+        boardContainer = new JPanel(new GridBagLayout());
+        boardContainer.setBackground(new Color(236, 240, 245));
 
         JPanel welcomeCard = new JPanel(new BorderLayout(0, 10));
         welcomeCard.setBackground(Color.WHITE);
@@ -134,10 +151,10 @@ public class SudokuUI extends JFrame {
         welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
         welcomeCard.add(welcomeLabel, BorderLayout.CENTER);
 
-        boardHost.add(welcomeCard);
+        boardContainer.add(welcomeCard);
 
         centerPanel.add(leftContainer, BorderLayout.WEST);
-        centerPanel.add(boardHost, BorderLayout.CENTER);
+        centerPanel.add(boardContainer, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 16));
         bottom.setBackground(new Color(236, 240, 245));
@@ -191,6 +208,27 @@ public class SudokuUI extends JFrame {
         return button;
     }
 
+    private void loadLevel(int index) {
+        if (index < 0 || index >= Board.getPuzzleCount()) {
+            return;
+        }
+
+        timer.stop();
+        timer.reset();
+
+        Board.setPuzzle(index);
+        drawBoard(Board.getBoard());
+
+        int best = SQL.getBestTime("Level " + (index + 1));
+        if (best >= 0) {
+            labelBest.setText("Best: " + formatTime(best));
+        } else {
+            labelBest.setText("Best: --:--");
+        }
+
+        timer.start();
+    }
+
     private int getUnlockedIndex(List<Integer> completed) {
         if (Board.getPuzzleCount() == 0) {
             return 0;
@@ -216,18 +254,43 @@ public class SudokuUI extends JFrame {
             return;
         }
 
+        int previousSelected = levelList.getSelectedIndex();
         List<Integer> completed = SQL.getCompletedLevels(loggedInUser);
         levelModel.clear();
 
         int unlockedIndex = getUnlockedIndex(completed);
+        Set<Integer> completedSet = new HashSet<>(completed);
 
+        updatingLevelList = true;
         for (int i = 0; i < Board.getPuzzleCount(); i++) {
-            String status = (i <= unlockedIndex) ? "" : " [LOCKED]";
+            int levelId = Board.getLevelId(i);
+            boolean isDone = completedSet.contains(levelId);
+            boolean isLocked = i > unlockedIndex;
+
+            String status = "";
+            if (isLocked) {
+                status = " [LOCKED]";
+            } else if (isDone) {
+                status = " [DONE]";
+            }
+
             levelModel.addElement("Level " + (i + 1) + " (" + Board.getPuzzle(i).length + "x" + Board.getPuzzle(i).length + ")" + status);
         }
 
         if (Board.getPuzzleCount() > 0) {
-            levelList.setSelectedIndex(Math.min(unlockedIndex, Board.getPuzzleCount() - 1));
+            int targetIndex = previousSelected;
+            if (targetIndex < 0 || targetIndex >= Board.getPuzzleCount()) {
+                targetIndex = Math.min(unlockedIndex, Board.getPuzzleCount() - 1);
+            }
+            levelList.setSelectedIndex(targetIndex);
+        }
+        updatingLevelList = false;
+
+        if ((Board.getCurrentIndex() < 0 || cells == null) && Board.getPuzzleCount() > 0) {
+            int index = levelList.getSelectedIndex();
+            if (index >= 0) {
+                loadLevel(index);
+            }
         }
     }
 
@@ -243,7 +306,7 @@ public class SudokuUI extends JFrame {
         try {
             Board.updateBoard(currentData);
 
-            if (Validator.isValid(Board.board)) {
+            if (Validator.isValid(Board.getBoard())) {
                 timer.stop();
                 int time = timer.getTime();
 
@@ -352,7 +415,7 @@ public class SudokuUI extends JFrame {
     }
 
     private void drawBoard(int[][] puzzleData) {
-        centerPanel.removeAll();
+        boardContainer.removeAll();
 
         int size = puzzleData.length;
         int boxSize = (int) Math.sqrt(size);
@@ -435,9 +498,9 @@ public class SudokuUI extends JFrame {
         }
 
         boardHolder.add(boardPanel);
-        centerPanel.add(boardHolder, BorderLayout.CENTER);
-        centerPanel.revalidate();
-        centerPanel.repaint();
+        boardContainer.add(boardHolder);
+        boardContainer.revalidate();
+        boardContainer.repaint();
     }
 
     private Border createCellBorder(int i, int j, int size, int boxSize) {
@@ -450,7 +513,7 @@ public class SudokuUI extends JFrame {
 
     void openLogin() {
         JDialog login = new JDialog(this, "Login", true);
-        login.setSize(360, 240);
+        login.setSize(360, 300);
         login.setLayout(new BorderLayout());
         login.getContentPane().setBackground(Color.WHITE);
 
