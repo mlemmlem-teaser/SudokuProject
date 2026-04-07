@@ -1,6 +1,10 @@
 import java.util.List;
 import java.util.Vector;
 
+/**
+ * Lớp giữ trạng thái board hiện tại và toàn bộ danh sách puzzle đã nạp từ DB.
+ * Mọi màn chơi đều được copy riêng để tránh sửa trực tiếp vào dữ liệu gốc.
+ */
 public class Board {
     static int[][] board;
     static Vector<int[][]> puzzles = new Vector<>();
@@ -31,6 +35,9 @@ public class Board {
         board = copyBoard(newValues);
     }
 
+    /**
+     * Nạp lại puzzle từ SQL Server.
+     */
     public static void ReadData() {
         puzzles.clear();
         puzzleIds.clear();
@@ -42,6 +49,9 @@ public class Board {
         puzzleIds.addAll(ids);
     }
 
+    /**
+     * Chọn puzzle hiện hành và đổ dữ liệu vào board.
+     */
     public static void setPuzzle(int index) {
         currentIndex = index;
         board = copyBoard(puzzles.get(index));
@@ -70,13 +80,16 @@ public class Board {
         }
 
         for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board.length; j++) {
+            for (int j = 0; j < board[i].length; j++) {
                 System.out.print(board[i][j] + " ");
             }
             System.out.println();
         }
     }
 
+    /**
+     * Copy mảng 2 chiều để tránh thay đổi dữ liệu gốc.
+     */
     public static int[][] copyBoard(int[][] source) {
         if (source == null) {
             return null;
@@ -88,5 +101,4 @@ public class Board {
         }
         return copy;
     }
-    
 }

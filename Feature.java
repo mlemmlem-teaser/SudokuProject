@@ -3,6 +3,9 @@ import javax.swing.SwingUtilities;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Bộ đếm thời gian hiển thị lên JLabel.
+ */
 public class Feature {
     private final JLabel label;
     private Timer timer;
@@ -14,6 +17,9 @@ public class Feature {
         updateLabel();
     }
 
+    /**
+     * Bắt đầu đếm thời gian.
+     */
     public void start() {
         stop();
         timer = new Timer(true);
@@ -26,6 +32,9 @@ public class Feature {
         }, 1000, 1000);
     }
 
+    /**
+     * Dừng timer.
+     */
     public void stop() {
         if (timer != null) {
             timer.cancel();
@@ -33,6 +42,9 @@ public class Feature {
         }
     }
 
+    /**
+     * Reset thời gian về 0.
+     */
     public void reset() {
         seconds = 0;
         updateLabel();

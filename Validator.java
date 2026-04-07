@@ -1,3 +1,7 @@
+/**
+ * Kiểm tra tính hợp lệ của board Sudoku.
+ * Hỗ trợ kích thước 4x4, 9x9, 16x16...
+ */
 public class Validator {
 
     public static boolean isValid(int[][] board) {
@@ -12,6 +16,7 @@ public class Validator {
             return false;
         }
 
+        // Không được có ô trống hoặc giá trị ngoài phạm vi.
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 int value = board[i][j];
@@ -21,6 +26,7 @@ public class Validator {
             }
         }
 
+        // Kiểm tra từng hàng.
         for (int i = 0; i < size; i++) {
             boolean[] seen = new boolean[size + 1];
             for (int j = 0; j < size; j++) {
@@ -32,6 +38,7 @@ public class Validator {
             }
         }
 
+        // Kiểm tra từng cột.
         for (int j = 0; j < size; j++) {
             boolean[] seen = new boolean[size + 1];
             for (int i = 0; i < size; i++) {
@@ -43,6 +50,7 @@ public class Validator {
             }
         }
 
+        // Kiểm tra từng khối con.
         for (int boxRow = 0; boxRow < size; boxRow += box) {
             for (int boxCol = 0; boxCol < size; boxCol += box) {
                 boolean[] seen = new boolean[size + 1];
@@ -61,6 +69,9 @@ public class Validator {
         return true;
     }
 
+    /**
+     * Kiểm tra nước đi của 1 ô cụ thể.
+     */
     public static boolean isValid(int[][] board, int row, int col, int num) {
         if (board == null || board.length == 0) {
             return false;

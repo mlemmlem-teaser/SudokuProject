@@ -1,3 +1,6 @@
+/**
+ * Giải Sudoku bằng backtracking.
+ */
 public class SudokuSolver {
 
     public static boolean solve(int[][] board) {

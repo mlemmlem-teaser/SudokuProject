@@ -7,24 +7,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Giao diện chính của game Sudoku.
+ * Hỗ trợ đăng nhập, đăng ký, chơi game, kiểm tra, solve, và quản lý puzzle cho admin.
+ */
 public class SudokuUI extends JFrame {
 
-    JTextField[][] cells;
-    JList<String> levelList;
-    DefaultListModel<String> levelModel;
-    JPanel centerPanel;
-    JPanel boardPanel;
-    JPanel boardContainer;
-    JButton loginBtn;
-    JButton solveBtn;
+    private JTextField[][] cells;
+    private JList<String> levelList;
+    private DefaultListModel<String> levelModel;
+    private JPanel boardContainer;
+    private JPanel boardPanel;
 
-    boolean updatingLevelList = false;
+    private JButton loginBtn;
+    private JButton registerBtn;
+    private JButton logoutBtn;
+    private JButton solveBtn;
+    private JButton checkBtn;
+    private JButton manageBtn;
 
-    JLabel labelTime = new JLabel("00:00");
-    JLabel labelBest = new JLabel("Best: --:--");
-    Feature timer = new Feature(labelTime);
+    private boolean updatingLevelList = false;
 
-    String loggedInUser = null;
+    private final JLabel labelTime = new JLabel("00:00");
+    private final JLabel labelBest = new JLabel("Best: --:--");
+    private final Feature timer = new Feature(labelTime);
+
+    private String loggedInUser = null;
+    private String loggedInRole = "user";
 
     public SudokuUI() {
         setTitle("Sudoku Game");
@@ -32,9 +41,17 @@ public class SudokuUI extends JFrame {
         setMinimumSize(new Dimension(980, 680));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(14, 14));
-
         getContentPane().setBackground(new Color(236, 240, 245));
 
+        buildTopPanel();
+        buildCenterPanel();
+        buildBottomPanel();
+
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void buildTopPanel() {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(new Color(33, 103, 172));
         topPanel.setBorder(new EmptyBorder(14, 18, 14, 18));
@@ -67,11 +84,12 @@ public class SudokuUI extends JFrame {
         topPanel.add(timerPanel, BorderLayout.EAST);
 
         add(topPanel, BorderLayout.NORTH);
+    }
 
-        centerPanel = new JPanel(new BorderLayout(14, 14));
+    private void buildCenterPanel() {
+        JPanel centerPanel = new JPanel(new BorderLayout(14, 14));
         centerPanel.setBackground(new Color(236, 240, 245));
         centerPanel.setBorder(new EmptyBorder(0, 14, 0, 14));
-        add(centerPanel, BorderLayout.CENTER);
 
         levelModel = new DefaultListModel<>();
         levelList = new JList<>(levelModel);
@@ -80,6 +98,7 @@ public class SudokuUI extends JFrame {
         levelList.setSelectionForeground(Color.WHITE);
         levelList.setFixedCellHeight(36);
         levelList.setBorder(new EmptyBorder(8, 8, 8, 8));
+
         levelList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
             JLabel label = new JLabel(value);
             label.setOpaque(true);
@@ -134,38 +153,50 @@ public class SudokuUI extends JFrame {
 
         JPanel leftContainer = new JPanel(new BorderLayout());
         leftContainer.setBackground(new Color(236, 240, 245));
-        leftContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
         leftContainer.add(levelPane, BorderLayout.CENTER);
 
         boardContainer = new JPanel(new GridBagLayout());
         boardContainer.setBackground(new Color(236, 240, 245));
-
-        JPanel welcomeCard = new JPanel(new BorderLayout(0, 10));
-        welcomeCard.setBackground(Color.WHITE);
-        welcomeCard.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 228, 236), 1, true),
-                new EmptyBorder(22, 22, 22, 22)));
-
-        JLabel welcomeLabel = new JLabel("Vui lòng đăng nhập để bắt đầu trò chơi.");
-        welcomeLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
-        welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        welcomeCard.add(welcomeLabel, BorderLayout.CENTER);
-
-        boardContainer.add(welcomeCard);
+        showWelcomeCard();
 
         centerPanel.add(leftContainer, BorderLayout.WEST);
         centerPanel.add(boardContainer, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 16));
+        add(centerPanel, BorderLayout.CENTER);
+    }
+
+    private void buildBottomPanel() {
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 16));
         bottom.setBackground(new Color(236, 240, 245));
 
         loginBtn = createButton("Login", new Color(33, 103, 172));
+        registerBtn = createButton("Register", new Color(52, 152, 219));
+        logoutBtn = createButton("Logout", new Color(120, 120, 120));
         solveBtn = createButton("Solve", new Color(142, 68, 173));
-        JButton checkBtn = createButton("Check Board", new Color(46, 160, 90));
+        checkBtn = createButton("Check Board", new Color(46, 160, 90));
+        manageBtn = createButton("Manage Puzzle", new Color(211, 84, 0));
+
+        logoutBtn.setVisible(false);
+        manageBtn.setVisible(false);
 
         bottom.add(loginBtn);
+        bottom.add(registerBtn);
+        bottom.add(logoutBtn);
         bottom.add(solveBtn);
         bottom.add(checkBtn);
+        bottom.add(manageBtn);
+
+        loginBtn.addActionListener(e -> {
+            if (loggedInUser == null) {
+                openLogin();
+            } else {
+                JOptionPane.showMessageDialog(this, "Bạn đã đăng nhập: " + loggedInUser);
+            }
+        });
+
+        registerBtn.addActionListener(e -> openRegister());
+
+        logoutBtn.addActionListener(e -> doLogout());
 
         checkBtn.addActionListener(e -> {
             if (loggedInUser == null) {
@@ -183,18 +214,18 @@ public class SudokuUI extends JFrame {
             handleSolveBoard();
         });
 
-        add(bottom, BorderLayout.SOUTH);
-
-        loginBtn.addActionListener(e -> {
-            if (loggedInUser == null) {
-                openLogin();
-            } else {
-                JOptionPane.showMessageDialog(this, "Bạn đã đăng nhập: " + loggedInUser);
+        manageBtn.addActionListener(e -> {
+            if (loggedInUser == null || !SQL.isAdmin(loggedInUser)) {
+                JOptionPane.showMessageDialog(this, "Chỉ admin mới có quyền quản lý puzzle.");
+                return;
             }
+            Puzzle.openManager(this, loggedInUser, () -> {
+                Board.ReadData();
+                refreshLevelList();
+            });
         });
 
-        setLocationRelativeTo(null);
-        setVisible(true);
+        add(bottom, BorderLayout.SOUTH);
     }
 
     private JButton createButton(String text, Color color) {
@@ -208,6 +239,211 @@ public class SudokuUI extends JFrame {
         return button;
     }
 
+    private void updateLoggedInStateUI() {
+        boolean loggedIn = loggedInUser != null;
+
+        loginBtn.setText(loggedIn ? "Hi, " + loggedInUser : "Login");
+        logoutBtn.setVisible(loggedIn);
+        registerBtn.setVisible(!loggedIn);
+        manageBtn.setVisible(loggedIn && SQL.isAdmin(loggedInUser));
+    }
+
+    private void doLogout() {
+        timer.stop();
+        timer.reset();
+
+        loggedInUser = null;
+        loggedInRole = "user";
+
+        Board.updateBoard(null);
+        Board.currentIndex = -1;
+
+        levelModel.clear();
+        labelBest.setText("Best: --:--");
+        showWelcomeCard();
+        cells = null;
+
+        updateLoggedInStateUI();
+        JOptionPane.showMessageDialog(this, "Đã đăng xuất.");
+    }
+
+    private void showWelcomeCard() {
+        boardContainer.removeAll();
+
+        JPanel welcomeCard = new JPanel(new BorderLayout(0, 10));
+        welcomeCard.setBackground(Color.WHITE);
+        welcomeCard.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(220, 228, 236), 1, true),
+                new EmptyBorder(22, 22, 22, 22)));
+
+        JLabel welcomeLabel = new JLabel("Vui lòng đăng nhập để bắt đầu trò chơi.");
+        welcomeLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        welcomeCard.add(welcomeLabel, BorderLayout.CENTER);
+
+        boardContainer.add(welcomeCard);
+        boardContainer.revalidate();
+        boardContainer.repaint();
+    }
+
+    /**
+     * Mở hộp thoại đăng nhập.
+     */
+    void openLogin() {
+        JDialog login = new JDialog(this, "Login", true);
+        login.setSize(380, 330);
+        login.setLayout(new BorderLayout());
+        login.getContentPane().setBackground(Color.WHITE);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(33, 103, 172));
+        header.setBorder(new EmptyBorder(14, 16, 14, 16));
+
+        JLabel loginTitle = new JLabel("Đăng nhập", JLabel.LEFT);
+        loginTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        loginTitle.setForeground(Color.WHITE);
+
+        JLabel loginSub = new JLabel("Sử dụng gmail và password");
+        loginSub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        loginSub.setForeground(new Color(230, 240, 250));
+
+        header.add(loginTitle, BorderLayout.NORTH);
+        header.add(loginSub, BorderLayout.SOUTH);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
+        form.setBorder(new EmptyBorder(18, 18, 16, 18));
+        form.setBackground(Color.WHITE);
+
+        JTextField gmailField = new JTextField();
+        JPasswordField passField = new JPasswordField();
+
+        form.add(new JLabel("Gmail:"));
+        form.add(gmailField);
+        form.add(new JLabel("Password:"));
+        form.add(passField);
+
+        JButton submit = createButton("Login", new Color(33, 103, 172));
+        JButton goRegister = createButton("Register", new Color(52, 152, 219));
+
+        submit.addActionListener(e -> {
+            String username = SQL.login(gmailField.getText(), new String(passField.getPassword()));
+            if (username != null) {
+                loggedInUser = username;
+                loggedInRole = SQL.getUserRole(username);
+                updateLoggedInStateUI();
+                refreshLevelList();
+                login.dispose();
+            } else {
+                JOptionPane.showMessageDialog(login, "Sai email hoặc mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        goRegister.addActionListener(e -> {
+            login.dispose();
+            openRegister();
+        });
+
+        JPanel bp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
+        bp.setBackground(Color.WHITE);
+        bp.setBorder(new EmptyBorder(0, 16, 14, 16));
+        bp.add(goRegister);
+        bp.add(submit);
+
+        login.add(header, BorderLayout.NORTH);
+        login.add(form, BorderLayout.CENTER);
+        login.add(bp, BorderLayout.SOUTH);
+        login.setLocationRelativeTo(this);
+        login.setVisible(true);
+    }
+
+    /**
+     * Mở hộp thoại đăng ký tài khoản mới.
+     */
+    void openRegister() {
+        JDialog dialog = new JDialog(this, "Register", true);
+        dialog.setSize(420, 360);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(Color.WHITE);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(33, 103, 172));
+        header.setBorder(new EmptyBorder(14, 16, 14, 16));
+
+        JLabel title = new JLabel("Đăng ký", JLabel.LEFT);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(Color.WHITE);
+
+        JLabel sub = new JLabel("Tạo tài khoản user mới");
+        sub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        sub.setForeground(new Color(230, 240, 250));
+
+        header.add(title, BorderLayout.NORTH);
+        header.add(sub, BorderLayout.SOUTH);
+
+        JPanel form = new JPanel(new GridLayout(3, 2, 10, 12));
+        form.setBorder(new EmptyBorder(18, 18, 16, 18));
+        form.setBackground(Color.WHITE);
+
+        JTextField gmailField = new JTextField();
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+        JPasswordField confirmField = new JPasswordField();
+
+        form.add(new JLabel("Gmail:"));
+        form.add(gmailField);
+        form.add(new JLabel("Username:"));
+        form.add(usernameField);
+        form.add(new JLabel("Password:"));
+        form.add(passwordField);
+
+        JPanel lower = new JPanel(new GridLayout(1, 2, 10, 12));
+        lower.setBackground(Color.WHITE);
+        lower.add(new JLabel("Confirm:"));
+        lower.add(confirmField);
+
+        JButton submit = createButton("Create account", new Color(33, 103, 172));
+
+        submit.addActionListener(e -> {
+            String gmail = gmailField.getText().trim();
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword());
+            String confirm = new String(confirmField.getPassword());
+
+            if (gmail.isEmpty() || username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng điền đầy đủ thông tin.");
+                return;
+            }
+
+            if (!password.equals(confirm)) {
+                JOptionPane.showMessageDialog(dialog, "Mật khẩu xác nhận không khớp.");
+                return;
+            }
+
+            if (SQL.signUp(gmail, password, username)) {
+                JOptionPane.showMessageDialog(dialog, "Đăng ký thành công. Hãy đăng nhập.");
+                dialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Không thể đăng ký. Gmail hoặc username có thể đã tồn tại.");
+            }
+        });
+
+        JPanel centerWrap = new JPanel(new BorderLayout(0, 8));
+        centerWrap.setBackground(Color.WHITE);
+        centerWrap.add(form, BorderLayout.CENTER);
+        centerWrap.add(lower, BorderLayout.SOUTH);
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
+        bottom.setBackground(Color.WHITE);
+        bottom.setBorder(new EmptyBorder(0, 16, 14, 16));
+        bottom.add(submit);
+
+        dialog.add(header, BorderLayout.NORTH);
+        dialog.add(centerWrap, BorderLayout.CENTER);
+        dialog.add(bottom, BorderLayout.SOUTH);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
     private void loadLevel(int index) {
         if (index < 0 || index >= Board.getPuzzleCount()) {
             return;
@@ -219,7 +455,9 @@ public class SudokuUI extends JFrame {
         Board.setPuzzle(index);
         drawBoard(Board.getBoard());
 
-        int best = SQL.getBestTime("Level " + (index + 1));
+        int userId = SQL.getUserId(loggedInUser);
+        int levelId = Board.getLevelId(index);
+        int best = SQL.getBestTime(userId, levelId);
         if (best >= 0) {
             labelBest.setText("Best: " + formatTime(best));
         } else {
@@ -251,6 +489,8 @@ public class SudokuUI extends JFrame {
 
     private void refreshLevelList() {
         if (loggedInUser == null) {
+            levelModel.clear();
+            showWelcomeCard();
             return;
         }
 
@@ -274,7 +514,8 @@ public class SudokuUI extends JFrame {
                 status = " [DONE]";
             }
 
-            levelModel.addElement("Level " + (i + 1) + " (" + Board.getPuzzle(i).length + "x" + Board.getPuzzle(i).length + ")" + status);
+            int[][] puzzle = Board.getPuzzle(i);
+            levelModel.addElement("Level " + (i + 1) + " (" + puzzle.length + "x" + puzzle.length + ")" + status);
         }
 
         if (Board.getPuzzleCount() > 0) {
@@ -316,13 +557,13 @@ public class SudokuUI extends JFrame {
                     return;
                 }
 
+                int userId = SQL.getUserId(loggedInUser);
                 int levelId = Board.getLevelId(levelIndex);
-                String levelName = "Level " + (levelIndex + 1);
 
                 SQL.markCompleted(loggedInUser, levelId);
-                SQL.insertTime(loggedInUser, levelName, time);
+                SQL.saveBestTime(userId, levelId, time);
 
-                int best = SQL.getBestTime(levelName);
+                int best = SQL.getBestTime(userId, levelId);
                 if (best >= 0) {
                     labelBest.setText("Best: " + formatTime(best));
                 }
@@ -344,6 +585,16 @@ public class SudokuUI extends JFrame {
             return;
         }
 
+        int userId = SQL.getUserId(loggedInUser);
+        if (!SQL.canUseSolve(userId)) {
+            long remain = SQL.getSolveCooldownRemainingSeconds(userId);
+            JOptionPane.showMessageDialog(this, "Bạn chỉ được dùng Solve mỗi 10 phút một lần.\nHãy đợi thêm " + remain + " giây.");
+            return;
+        }
+
+        // Đánh dấu ngay khi dùng để ngăn spam Solve.
+        SQL.markSolveUsed(userId);
+
         int[][] currentData = readCurrentBoard(size);
         int[][] solvingBoard = Board.copyBoard(currentData);
 
@@ -361,10 +612,9 @@ public class SudokuUI extends JFrame {
         int levelIndex = levelList.getSelectedIndex();
         if (levelIndex >= 0) {
             int levelId = Board.getLevelId(levelIndex);
-            String levelName = "Level " + (levelIndex + 1);
             SQL.markCompleted(loggedInUser, levelId);
-            SQL.insertTime(loggedInUser, levelName, timer.getTime());
-            int best = SQL.getBestTime(levelName);
+            SQL.saveBestTime(userId, levelId, timer.getTime());
+            int best = SQL.getBestTime(userId, levelId);
             if (best >= 0) {
                 labelBest.setText("Best: " + formatTime(best));
             }
@@ -509,64 +759,5 @@ public class SudokuUI extends JFrame {
         int bottom = (i == size - 1) ? 3 : 1;
         int right = (j == size - 1) ? 3 : 1;
         return new MatteBorder(top, left, bottom, right, new Color(26, 47, 77));
-    }
-
-    void openLogin() {
-        JDialog login = new JDialog(this, "Login", true);
-        login.setSize(360, 300);
-        login.setLayout(new BorderLayout());
-        login.getContentPane().setBackground(Color.WHITE);
-
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(33, 103, 172));
-        header.setBorder(new EmptyBorder(14, 16, 14, 16));
-
-        JLabel loginTitle = new JLabel("Đăng nhập", JLabel.LEFT);
-        loginTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        loginTitle.setForeground(Color.WHITE);
-
-        JLabel loginSub = new JLabel("Sử dụng gmail và password");
-        loginSub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        loginSub.setForeground(new Color(230, 240, 250));
-
-        header.add(loginTitle, BorderLayout.NORTH);
-        header.add(loginSub, BorderLayout.SOUTH);
-
-        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
-        form.setBorder(new EmptyBorder(18, 18, 16, 18));
-        form.setBackground(Color.WHITE);
-
-        JTextField gmailField = new JTextField();
-        JPasswordField passField = new JPasswordField();
-
-        form.add(new JLabel("Gmail:"));
-        form.add(gmailField);
-        form.add(new JLabel("Password:"));
-        form.add(passField);
-
-        JButton submit = createButton("Login", new Color(33, 103, 172));
-
-        submit.addActionListener(e -> {
-            String username = SQL.login(gmailField.getText(), new String(passField.getPassword()));
-            if (username != null) {
-                loggedInUser = username;
-                loginBtn.setText("Hi, " + username);
-                refreshLevelList();
-                login.dispose();
-            } else {
-                JOptionPane.showMessageDialog(login, "Sai email hoặc mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        JPanel bp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 18, 8));
-        bp.setBackground(Color.WHITE);
-        bp.setBorder(new EmptyBorder(0, 16, 14, 16));
-        bp.add(submit);
-
-        login.add(header, BorderLayout.NORTH);
-        login.add(form, BorderLayout.CENTER);
-        login.add(bp, BorderLayout.SOUTH);
-        login.setLocationRelativeTo(this);
-        login.setVisible(true);
     }
 }
